@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todolist
+  labels:
+    app: todolist
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todolist
+  template:
+    metadata:
+      labels:
+        app: todolist
+      annotations:
+        azure.workload.identity/use: "true"
+    spec:
+      #serviceAccountName: todolist-sa  # Use the service account defined for workload identity
+      containers:
+      - name: todolist
+        image: acrkubebluene01.azurecr.io/todolist:0.1.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        # Configuration for SQLite backend
+        - name: TODO_BACKEND
+          value: "sqlite"  # Change to "azure" to use Azure Table Storage
+          
+        # Logging Configuration
+        - name: LOG_LEVEL
+          value: "INFO"  # Set to DEBUG for more verbose logging
+
+        # Configuration for Azure Table Storage with Workload Identity
+        # - name: TODO_BACKEND
+        #   value: "azure"
+        # - name: USE_WORKLOAD_IDENTITY
+        #   value: "true"
+        # - name: AZURE_STORAGE_ACCOUNT_NAME
+        #   value: "yourstorageaccount"  # Replace with your storage account name
+        # - name: AZURE_TABLE_NAME
+        #   value: "todos"
+        # - name: LOG_LEVEL
+        #   value: "DEBUG"  # Set to DEBUG for workload identity troubleshooting
+
+        # Configuration for Azure Table Storage with Connection String
+        # - name: TODO_BACKEND
+        #   value: "azure"
+        # - name: AZURE_STORAGE_CONNECTION_STRING
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: azure-storage-secret
+        #       key: connection-string
+        # - name: AZURE_TABLE_NAME
+        #   value: "todos"
+        
+        volumeMounts:
+        - name: todo-data
+          mountPath: /app/data
+      volumes:
+      - name: todo-data
+        emptyDir: {}
+        # For persistence, use a PersistentVolumeClaim instead
+        # persistentVolumeClaim:
+        #   claimName: todolist-pvc

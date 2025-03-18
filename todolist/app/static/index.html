@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        li.completed {
+            background-color: #f8f8f8;
+            text-decoration: line-through;
+            color: #888;
+        }
+        .task-title {
+            flex-grow: 1;
+            margin-left: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 70%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button.delete {
+            background-color: #f44336;
+        }
+        button.toggle {
+            background-color: #2196F3;
+        }
+        .buttons {
+            display: flex;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Todo List</h1>
+    
+    <div class="form-group">
+        <input type="text" id="new-task" placeholder="Enter a new task">
+        <button id="add-task">Add Task</button>
+    </div>
+    
+    <ul id="task-list"></ul>
+
+    <script>
+        const API_URL = '/todos';
+        
+        // Load tasks when page loads
+        document.addEventListener('DOMContentLoaded', loadTasks);
+        
+        // Add task when button is clicked
+        document.getElementById('add-task').addEventListener('click', addTask);
+        
+        // Add task when Enter key is pressed
+        document.getElementById('new-task').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+        
+        // Function to load tasks from API
+        async function loadTasks() {
+            try {
+                const response = await fetch(API_URL);
+                const tasks = await response.json();
+                
+                const taskList = document.getElementById('task-list');
+                taskList.innerHTML = '';
+                
+                tasks.forEach(task => {
+                    const li = document.createElement('li');
+                    if (task.completed) {
+                        li.classList.add('completed');
+                    }
+                    
+                    li.innerHTML = `
+                        <input type="checkbox" ${task.completed ? 'checked' : ''}>
+                        <span class="task-title">${task.title}</span>
+                        <div class="buttons">
+                            <button class="toggle">Toggle</button>
+                            <button class="delete">Delete</button>
+                        </div>
+                    `;
+                    
+                    // Set data attribute for task ID
+                    li.dataset.id = task.id;
+                    
+                    // Add event listeners
+                    li.querySelector('input[type="checkbox"]').addEventListener('change', function() {
+                        toggleTask(task.id);
+                    });
+                    
+                    li.querySelector('.toggle').addEventListener('click', function() {
+                        toggleTask(task.id);
+                    });
+                    
+                    li.querySelector('.delete').addEventListener('click', function() {
+                        deleteTask(task.id);
+                    });
+                    
+                    taskList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+            }
+        }
+        
+        // Function to add a new task
+        async function addTask() {
+            const taskInput = document.getElementById('new-task');
+            const title = taskInput.value.trim();
+            
+            if (!title) return;
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title })
+                });
+                
+                if (response.ok) {
+                    taskInput.value = '';
+                    loadTasks();
+                }
+            } catch (error) {
+                console.error('Error adding task:', error);
+            }
+        }
+        
+        // Function to toggle task completion
+        async function toggleTask(id) {
+            try {
+                const response = await fetch(`${API_URL}/${id}/toggle`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    loadTasks();
+                }
+            } catch (error) {
+                console.error('Error toggling task:', error);
+            }
+        }
+        
+        // Function to delete a task
+        async function deleteTask(id) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadTasks();
+                }
+            } catch (error) {
+                console.error('Error deleting task:', error);
+            }
+        }
+    </script>
+</body>
+</html>
