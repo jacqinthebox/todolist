@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todolist
+spec:
+  template:
+    spec:
+      nodeSelector:
+        app: app01
+      tolerations:
+      - key: "appid"
+        operator: "Equal"
+        value: "app01"
+        effect: "NoSchedule"

@@ -235,6 +235,44 @@ kubectl apply -f kubernetes/deployment.yaml
 kubectl apply -f kubernetes/service.yaml
 ```
 
+### Deployment to AKS Using Kustomize
+
+The project includes Kustomize overlays for deploying to different environments (app01 and app02):
+
+1. **Prerequisites**:
+   - Azure CLI installed
+   - kubectl installed
+   - Authenticated with Azure and AKS cluster
+
+2. **Connect to your AKS cluster**:
+   ```bash
+   az aks get-credentials --resource-group myResourceGroup --name myAKSCluster
+   ```
+
+3. **Deploy to app01 environment**:
+   ```bash
+   kubectl apply -k kubernetes/overlays/app01
+   ```
+
+4. **Deploy to app02 environment**:
+   ```bash
+   kubectl apply -k kubernetes/overlays/app02
+   ```
+
+5. **Verify the deployment**:
+   ```bash
+   # Check deployment status
+   kubectl get deployments -l app=todolist
+   
+   # Check service status
+   kubectl get services -l app=todolist
+   
+   # Check pod status
+   kubectl get pods -l app=todolist
+   ```
+
+The overlays configure the application to run on specific node pools with the appropriate tolerations and selectors for each environment.
+
 ### Azure Table Storage with Connection String
 
 For Azure Table Storage using a connection string:
